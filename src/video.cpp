@@ -15,6 +15,7 @@
 #include "assert.h"
 extern "C"{
 #include <stdint.h>
+
 }
 #include "cv.h"
 
@@ -80,30 +81,34 @@ Video::~Video(){
 }
 
 
+
 bool Video::open(const char* fn )
 {
-
   avcodec_register_all();
   avfilter_register_all();
-  av_register_all(); // register all the component 
-  avformat_network_init();
-  strcpy(filename, fn);
+  av_register_all(); // register all the component
 
   /**
-   * I do not know why that if I directly run
+   * 1. I do not know why that if I directly run
    *     avformat_open_input(&pFormatCtx, filename, NULL, NULL)
    * then can not open the video ( "moov atom not found" )
    * But if I use a local variable tmp, then every thing works
+   * 
+   * 2. '/' in filename must be "//"
    */
+
+  strcpy( filename, fn );
+
   AVFormatContext * tmp = NULL;
-  if(avformat_open_input(&tmp, filename, NULL, NULL)!=0)
+
+  if(avformat_open_input(&tmp, filename, NULL, NULL) != 0)
     {
-      LOG_WARNING("Can not open video file");
+      LOG_FATAL("Can not open video file : be sure that use \"//\", not \"/\" in filename ");
       return false;
     }
   pFormatCtx = tmp;
   numStream = pFormatCtx->nb_streams;
-
+  
   AVDictionary ** opts=NULL;
   if (avformat_find_stream_info(pFormatCtx, opts)<0)
     {

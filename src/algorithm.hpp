@@ -25,7 +25,7 @@ class Algorithm
 {
 public:
   Algorithm(char** argv, int argc);
-  Algorithm(char** argv, int argc, Video* v, string n);
+  Algorithm(char** argv, int argc, string n);
   virtual ~Algorithm(){};
 
   /**

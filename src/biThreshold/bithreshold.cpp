@@ -21,14 +21,14 @@ using dms::Option;
 #define KEY_CUT_BIAS "-cb"
 #define KEY_MARGIN "-m"
 
-BiThreshold::BiThreshold( char** argv, int argc, Video* v ) : Algorithm( argv, argc, v, "biThreshold")
+BiThreshold::BiThreshold( char** argv, int argc) : Algorithm( argv, argc, "biThreshold")
 {
 
   Option op;
 
   op.set_head( "Help information for \"biThresholds\" algorithm\n" );
   op.set_tail( "\n" );
-  
+
   op.add_int( KEY_GRID_WIDTH, "number of grid horizontally", 3, set<int>() );
   op.add_int( KEY_GRID_HEIGHT, "number of grid vertically", 4, set<int>() );
   op.add_int( KEY_GRID_BEGIN, "the first index to pick", 2, set<int>() );
@@ -69,6 +69,8 @@ BiThreshold::BiThreshold( char** argv, int argc, Video* v ) : Algorithm( argv, a
   cutBias = op.get_float( KEY_CUT_BIAS );
   margin = op.get_float( KEY_MARGIN );
 
+  video = new Video();
+
   if ( video->open(videoFilePath.c_str()) != true ) 
     {
       LOG_FATAL( "can not open the video" );
@@ -82,7 +84,10 @@ BiThreshold::BiThreshold( char** argv, int argc, Video* v ) : Algorithm( argv, a
 
 BiThreshold::~BiThreshold()
 {
-  
+  if ( video != NULL )
+    {
+      delete video;
+    }
 }
 
 

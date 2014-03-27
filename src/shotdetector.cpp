@@ -24,6 +24,7 @@ using dms::Option;
 ShotDetector::ShotDetector( char** argv, int argc )
 {
   alg = NULL;
+  video = NULL;
   /**
    * Parse the options and decide which algorithm to use
    * 
@@ -61,7 +62,7 @@ ShotDetector::ShotDetector( char** argv, int argc )
       string tmpalgname = op.get_string( "-a" );
       if ( tmpalgname == "biThresholds" )
 	{
-	  alg = new BiThreshold( argv, argc, NULL );
+	  alg = new BiThreshold( argv, argc );
 	}
       exit(0);
     }
@@ -74,17 +75,12 @@ ShotDetector::ShotDetector( char** argv, int argc )
   outputPath = op.get_string( "-o" );
   
   videoFilePath = op.get_string( "-i" );
-  video = new Video;
-  if ( video->open( videoFilePath.c_str() ) != true )
-    {
-      LOG_FATAL( "can not open video" );
-    }
-  
+
   string algname = op.get_string( "-a" );
 
   if ( algname == "biThresholds" )
     {
-      alg = new BiThreshold( argv, argc, video );
+      alg = new BiThreshold( argv, argc );
     }
   
 }
@@ -94,6 +90,10 @@ ShotDetector::~ShotDetector()
   if ( alg != NULL )
     {
       delete alg;
+    }
+  if ( video != NULL )
+    {
+      delete video;
     }
 }
 
@@ -118,7 +118,15 @@ bool ShotDetector::outputKeyFrame()
     }
 
   //video->seekTo(0);  // does not work very well, changed to reopen the video
-  video->close();
+  if (video == NULL)
+    {
+      video = new Video();
+    }
+  else
+    {
+      video->close();
+    }
+
   video->open(videoFilePath.c_str());
 
   /**
@@ -137,7 +145,6 @@ bool ShotDetector::outputKeyFrame()
    * 
    */
   CvRect cr = video->getROI();
-  video->resetROI();
 
   for(ci=detectresult.begin(); ci!=detectresult.end(); ci++){
     ts = 0.5* (*ci).first +0.5* (*ci).second;
@@ -150,7 +157,5 @@ bool ShotDetector::outputKeyFrame()
    * retrieve the original ROI
    * 
    */
-
-  video->setROI(cr);
   
 }

@@ -26,7 +26,7 @@ using std::string;
 class BiThreshold : public Algorithm
 {
 public:
-  BiThreshold( char** argv, int argc, Video* v );
+  BiThreshold( char** argv, int argc);
   virtual ~BiThreshold();
 
   virtual bool detect();

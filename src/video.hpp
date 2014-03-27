@@ -66,7 +66,7 @@ class Video{
   IplImage* operator [] (double ts){return getFrame(ts);}
 
  private:
-  char filename[100];      // store the filename
+  char filename[1024];      // store the filename
   char fnPrefix[20];       // store the prefix of filename  
 
   IplImage* frame;        // the pointer to the IplImage
