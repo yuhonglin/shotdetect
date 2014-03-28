@@ -120,7 +120,7 @@ Hist::Hist(Hist& h){
     
   histSize[0]=h.getHistSize()[0];
   histSize[1]=h.getHistSize()[1];
-  histSize[3]=h.getHistSize()[2];
+  histSize[2]=h.getHistSize()[2];
 
   histRange[0][0] = h.getHistRange()[0][0];
   histRange[0][1] = h.getHistRange()[0][1];
@@ -180,7 +180,7 @@ void Hist::operator=(Hist& h){
     
   histSize[0]=h.getHistSize()[0];
   histSize[1]=h.getHistSize()[1];
-  histSize[3]=h.getHistSize()[2];
+  histSize[2]=h.getHistSize()[2];
 
   histRange[0][0] = h.getHistRange()[0][0];
   histRange[0][1] = h.getHistRange()[0][1];
