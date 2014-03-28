@@ -10,9 +10,11 @@
 
 #include <set>
 #include <string>
+#include <sstream>
 
 using std::set;
 using std::string;
+using std::stringstream;
 
 #include "option.hpp"
 #include "logger.hpp"
@@ -146,9 +148,25 @@ bool ShotDetector::outputKeyFrame()
    */
   CvRect cr = video->getROI();
 
+
+  /**
+   * get file name
+   * 
+   */
+  string clfn;
+
+  string revop(videoFilePath.rbegin(), videoFilePath.rend()); // reversed version of the outputPath
+
+  string revfn; // reversed version of the filename
+  stringstream ss1(revop);
+  std::getline( ss1, revfn, '/' );
+
+  stringstream ss2(string(revfn.rbegin(), revfn.rend()));
+  std::getline( ss2, clfn, '.' );
+
   for(ci=detectresult.begin(); ci!=detectresult.end(); ci++){
     ts = 0.5* (*ci).first +0.5* (*ci).second;
-    sprintf(fn, "%s/%s@%d@%f-%f-%f.jpg", outputPath.c_str(), "abc", i, (*ci).first, ts, (*ci).second);
+    sprintf(fn, "%s/%s@%d@%f-%f-%f.jpg", outputPath.c_str(), clfn.c_str(), i, (*ci).first, ts, (*ci).second);
     cvSaveImage(fn, video->getFrame(ts));
     i++;
   }
