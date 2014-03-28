@@ -45,6 +45,9 @@ BiThreshold::BiThreshold( char** argv, int argc) : Algorithm( argv, argc, "biThr
   op.add_float( KEY_MARGIN, "margin", 0.0, set<float>() );
 
   op.add_bool( "--help", "show help information", false );
+  
+  op.add_string( "-i",	 "The input video file path");
+  
 
   op.parse(argc, argv, true);
 
@@ -54,6 +57,8 @@ BiThreshold::BiThreshold( char** argv, int argc) : Algorithm( argv, argc, "biThr
       return;
     }
 
+  videoFilePath = op.get_string( "-i" );
+  
   numGridWidth = op.get_int( KEY_GRID_WIDTH );
   numGridHeight = op.get_int( KEY_GRID_HEIGHT );
   gridBegin = op.get_int( KEY_GRID_BEGIN );
