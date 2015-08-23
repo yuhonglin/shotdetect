@@ -2,10 +2,10 @@
  * @file   bithreshold.hpp
  * @author yuhonglin <yuhonglin1986@gmail.com>
  * @date   Fri Jul  5 15:48:03 2013
- * 
- * @brief  
- * 
- * 
+ *
+ * @brief
+ *
+ *
  */
 
 #ifndef _BITHRESHOLD_H_
@@ -22,33 +22,30 @@ using std::string;
 #include "video.hpp"
 #include "algorithm.hpp"
 
-
-class BiThreshold : public Algorithm
-{
+class BiThreshold : public Algorithm {
 public:
-  BiThreshold( char** argv, int argc);
+  BiThreshold(char **argv, int argc);
   virtual ~BiThreshold();
 
   virtual bool detect();
 
 private:
-
   /**
    * the thresholds needed for the algorithm
-   * 
+   *
    */
 
   int numGridWidth;
   int numGridHeight;
   int gridBegin;
   int gridEnd;
-  
+
   float lowThreshold;
   float midThreshold;
   float highThreshold;
 
   float minShotLength;
-  
+
   float timeStep;
 
   float widthMarginRate;
@@ -58,9 +55,8 @@ private:
 
   float margin;
 
-  float midAverage(float* array, int length);
-  float compare(Hist* foo, Hist* bar, int mode=CV_COMP_CORREL);
-  
+  float midAverage(float *array, int length);
+  float compare(Hist *foo, Hist *bar, int mode = CV_COMP_CORREL);
 };
 
 #endif /* _BITHRESHOLD_H_ */
