@@ -152,8 +152,8 @@ bool Video::open(const char* fn )
     cvSetImageROI(frame, roi);
   }
   
-  pFrame = avcodec_alloc_frame();
-  pFrameRGB=avcodec_alloc_frame();
+  pFrame = av_frame_alloc();
+  pFrameRGB=av_frame_alloc();
   buffer=new uint8_t[avpicture_get_size(PIX_FMT_RGB24, width, height)];
   avpicture_fill((AVPicture *)pFrameRGB, buffer, PIX_FMT_RGB24, width, height); 
   img_convert_ctx = sws_getContext( originalWidth, originalHeight, pCodecCtx->pix_fmt, width, height, PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);
