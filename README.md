@@ -7,10 +7,6 @@ ShotDetect is "shot detection and keyframe extraction" program
   - I can deal with all formats of online videos (thanks to libavcodec etc.)
   - The performace is quite good (f1 score > 80% from a test on 400 shots)
 
-Warning
--------
-> This program has already been used to process millions of online videos. Its performance is stable. But I have not test it by Valgrind. So it should have some memory leaks. I may fix this when I have time. 
-
 
 Version
 ----
@@ -44,7 +40,6 @@ Output format
 Semantic of the keyframe's filename: ```videoFileName``` + ```@``` + ```index``` + ```@``` + ```shot's starting time``` + ```@``` + ```keyframe's time``` + ```@``` + ```shot's ending time``` + ```.jpg```
 
 Currently, the keyframe is always the middle frame in time.
-
 
 License
 ----
