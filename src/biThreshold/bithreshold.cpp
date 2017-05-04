@@ -186,7 +186,7 @@ bool BiThreshold::detect() {
       begin = i;
       continue;
     }
-    if (midiff < highThreshold && i - begin > lowThreshold) {
+    if (midiff < highThreshold && i - begin > minShotLength) {
       /* suspected transition detected */
       cache = foo;
       for (j = i; j < totalnum; j += timeStep) {
