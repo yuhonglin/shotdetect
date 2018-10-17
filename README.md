@@ -1,10 +1,10 @@
-ShortDetect
+ShotDetect
 =========
 
 ShotDetect is "shot detection and keyframe extraction" program
 
   - It is fast, deveploped by C++ and is directly based on libavcodec and openCV etc.
-  - I can deal with all formats of online videos (thanks to libavcodec etc.)
+  - It can deal with all formats of online videos (thanks to libavcodec etc.)
   - The performace is quite good (f1 score > 80% from a test on 400 shots)
 
 
