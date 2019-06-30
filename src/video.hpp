@@ -13,12 +13,11 @@
 
 #include <list>
 #include <map>
-#include "cv.h"
-#include "highgui.h"
+#include "opencv2/opencv.hpp"
+// #include "opencv/highgui.h"
 extern "C" {
 #include "libavcodec/avcodec.h"
 #include "libavformat/avformat.h"
-#include "libavfilter/avfilter.h"
 #include "libswscale/swscale.h"
 #include "libavutil/dict.h"
 }
@@ -28,7 +27,7 @@ extern "C" {
 
 /**
  * This Video Class can open a video and get any frame
- * (driver: FFmpeg, output format IplImage) at any timestamp
+ * (driver: FFmpeg, output format cvMat) at any timestamp
  *
  */
 
@@ -42,33 +41,33 @@ public:
    * iterate though the video one frame
    * by another
    *
-   * @return a pointer to the IplImage
+   * @return a pointer to the cv::Mat
    */
-  IplImage *iterate();
+  cv::Mat iterate();
   void close();
 
   /**
-   * get a frame in IplImage format at time stamp ts
+   * get a frame in cv::Mat at time stamp ts
    *
    * @param ts the timestamp of the frame
    *
-   * @return a pointer to the IplImage
+   * @return a cv::Mat
    */
-  IplImage *getFrame(double ts = 0);
+  cv::Mat getFrame(double ts = 0);
   /**
-   * wrapper of IplImage* getFrame(double ts=0)
+   * wrapper of cv::Mat getFrame(double ts=0)
    *
    * @param ts the timestamp of the frame
    *
    * @return a pointer to the IplImage
    */
-  IplImage *operator[](double ts) { return getFrame(ts); }
+  cv::Mat operator[](double ts) { return getFrame(ts); }
 
 private:
   char filename[1024]; // store the filename
   char fnPrefix[20];   // store the prefix of filename
 
-  IplImage *frame; // the pointer to the IplImage
+  cv::Mat frame; // the frame
 
   int width;  // the width of the output frame
   int height; // the height of the output frame
@@ -79,8 +78,6 @@ private:
 
   int originalWidth;  // the original frame width of the video
   int originalHeight; // the original frame height of the video
-
-  std::map<int, IplImage *> frameCache; // the frames that cached in memory
 
   double currentTimeStamp; // current time stamp
 
@@ -108,11 +105,11 @@ private:
    *
    * @return
    */
-  bool GetNextFrame();
-  void FrameToIplImage();
+  bool getNextFrame();
+  void frameToCvMat();
   void scaleAndTransform();
 
-  CvRect roi;
+  cv::Rect roi;
 
 public:
   double getCurrentTimeStamp() { return currentTimeStamp; }
@@ -136,10 +133,9 @@ public:
 
   void setHeight(int h);
 
-  CvRect getROI();
-  void setROI(CvRect &cr);
+  cv::Rect getROI();
+  void setROI(cv::Rect &cr);
   void setROI(int x = -1, int y = -1, int w = -1, int h = -1);
-  void resetROI();
 
   int str2int(const char *);
 };

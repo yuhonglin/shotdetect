@@ -126,7 +126,7 @@ bool ShotDetector::outputKeyFrame() {
    * store the original ROI and reset it
    *
    */
-  CvRect cr = video->getROI();
+  cv::Rect cr = video->getROI();
 
   /**
    * get file name
@@ -148,7 +148,8 @@ bool ShotDetector::outputKeyFrame() {
     ts = 0.5 * (*ci).first + 0.5 * (*ci).second;
     sprintf(fn, "%s/%s@%d@%f-%f-%f.jpg", outputPath.c_str(), clfn.c_str(), i,
             (*ci).first, ts, (*ci).second);
-    cvSaveImage(fn, video->getFrame(ts));
+    //    cvSaveImage(fn, video->getFrame(ts));
+    cv::imwrite(fn, video->getFrame(ts));
     i++;
   }
 

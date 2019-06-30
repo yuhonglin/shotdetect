@@ -11,8 +11,10 @@
 #ifndef _HISTOGRAM_H_
 #define _HISTOGRAM_H_
 
-#include "cv.h"
-#include "highgui.h"
+#include <vector>
+#include <unordered_map>
+
+#include "opencv2/opencv.hpp"
 
 struct Grid {
   int x;
@@ -21,30 +23,35 @@ struct Grid {
 class Hist {
 public:
   Hist();
-  Hist(Hist &h);
+  //  Hist(Hist &h) = delete;
   ~Hist();
 
-  void setImage(IplImage *i);
+  // assume the input image is always RGB
+  void setImageRGB(const cv::Mat& m);
   void calculate();
   void setGrid(int x, int y);
-  CvHistogram *get(int index);
-  CvHistogram *operator[](int index);
   Grid getGrid() { return grid; }
 
-  int *getHistSize() {
+  std::vector<int>& getHistSize() {
     return histSize;
   };
-  float **getHistRange() { return histRange; }
-  IplImage *getImage() { return image; }
-  CvHistogram **getHist() { return hist; }
+  std::vector<std::vector<float>>& getHistRange() { return histRange; }
+  cv::Mat getImage() { return image; }
+  std::unordered_map<int, std::vector<cv::Mat>>& getHist() { return channel_hist; }
 
-  void operator=(Hist &h);
+  //  void operator=(Hist &h) = delete;
 
 private:
-  int histSize[3];
-  float **histRange;
-  IplImage *image;
-  CvHistogram **hist;
+  // number of channels
+  int nchannel;
+  std::vector<int> histSize;
+  // hist range for each channel
+  std::vector<std::vector<float>> histRange;
+  std::vector<float*> ranges; // same data s histRange, used to feed cv::calcHist
+  
+  cv::Mat image;
+  // for each channel, there is a list of histogram
+  std::unordered_map<int, std::vector<cv::Mat>> channel_hist;
   Grid grid;
 };
 
