@@ -16,7 +16,7 @@
 using std::list;
 using std::string;
 
-#include "cv.h"
+#include "opencv2/opencv.hpp"
 
 #include "hist.hpp"
 #include "video.hpp"
@@ -55,8 +55,14 @@ private:
 
   float margin;
 
-  float midAverage(float *array, int length);
-  float compare(Hist *foo, Hist *bar, int mode = CV_COMP_CORREL);
+  Video video;
+
+  int nchannel;
+  
+  // will sort the input array
+  float midAverage(std::vector<float>& array);
+  float compare(Hist& foo, Hist& bar,
+		cv::HistCompMethods mode = cv::HISTCMP_CORREL);
 };
 
 #endif /* _BITHRESHOLD_H_ */

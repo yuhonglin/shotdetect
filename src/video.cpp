@@ -16,7 +16,6 @@
 extern "C" {
 #include <stdint.h>
 }
-#include "cv.h"
 
 #include "video.hpp"
 #include "logger.hpp"
@@ -38,7 +37,6 @@ Video::Video() {
   originalHeight = 0;
   count = 0;
   index = 0;
-  frame = NULL;
   strcpy(filename, "");
   strcpy(fnPrefix, "");
   roi.x = -1;
@@ -66,18 +64,13 @@ Video::Video() {
 
 Video::~Video() {
 
-  if (frame != NULL) {
-    cvReleaseImage(&frame);
-    frame = NULL;
-  }
-
   fFirstTime = true;
   bytesRemaining = 0;
 }
 
 bool Video::open(const char *fn) {
   avcodec_register_all();
-  avfilter_register_all();
+  //  avfilter_register_all();
   av_register_all(); // register all the component
 
   /**
@@ -134,10 +127,10 @@ bool Video::open(const char *fn) {
   originalWidth = pCodecCtx->width;
   originalHeight = pCodecCtx->height;
 
-  frame = cvCreateImage(cvSize(width, height), 8, 3);
+  //  frame = cvCreateImage(cvSize(width, height), 8, 3);
 
   if (roi.x > 0) {
-    cvSetImageROI(frame, roi);
+    frame = frame(roi);
   }
 
   pFrame = av_frame_alloc();
@@ -148,20 +141,10 @@ bool Video::open(const char *fn) {
       sws_getContext(originalWidth, originalHeight, pCodecCtx->pix_fmt, width,
                      height, PIX_FMT_RGB24, SWS_BICUBIC, NULL, NULL, NULL);
 
-  // avformat_seek_file(pFormatCtx, -1, (-9223372036854775807L-1), 0,
-  // 9223372036854775807L, AVSEEK_FLAG_FRAME);
-  // avformat_seek_file(pFormatCtx, videoStream, -1, 0, 10000000,
-  // AVSEEK_FLAG_FRAME);
-
   return true;
 }
 
 void Video::close() {
-
-  if (frame != NULL) {
-    cvReleaseImage(&frame);
-    frame = NULL;
-  }
 
   if (pFrameRGB != NULL) {
     av_free(pFrameRGB);
@@ -186,11 +169,11 @@ void Video::close() {
   currentTimeStamp = 0;
 }
 
-IplImage *Video::getFrame(double ts) {
+cv::Mat Video::getFrame(double ts) {
 
   for (int p = 0; p < 100000; p++) {
-    if (GetNextFrame() == 0)
-      return NULL;
+    if (getNextFrame() == 0)
+      return cv::Mat();
     if (currentTimeStamp >= ts) {
       break;
     }
@@ -203,7 +186,7 @@ void Video::scaleAndTransform() {
   sws_scale(img_convert_ctx, (const uint8_t * const *)pFrame->data,
             pFrame->linesize, 0, pCodecCtx->height, pFrameRGB->data,
             pFrameRGB->linesize);
-  FrameToIplImage();
+  frameToCvMat();
 }
 
 void Video::seekTo(double ts) {
@@ -217,7 +200,7 @@ void Video::seekTo(double ts) {
 
 void Video::setFnPrefix(const char *fnp) { strcpy(fnPrefix, fnp); }
 
-bool Video::GetNextFrame() {
+bool Video::getNextFrame() {
 
   int bytesDecoded;
   int frameFinished = 0;
@@ -255,52 +238,38 @@ bool Video::GetNextFrame() {
   return true;
 }
 
-void Video::FrameToIplImage() {
+void Video::frameToCvMat() {
 
-  // frame->nSize = sizeof(IplImage);
-  // frame->ID = 0; // always zero
-  // frame->nChannels = 3;
-  // ipliamge->alphaChannel = NULL; //ignored by opencv
-  // frame->depth = IPL_DEPTH_8U;
-  // ipliamge->colorModel = NULL; //ignored by opencv
-  // ipliamge->channelSeq = NULL; //ignored by opencv
-  // frame->dataOrder = 0; //interleaved color channels
-  // frame->origin = 0; //top-left origin
-  // iplimage->align = 4; //ignored by opencv
-  frame->width = width;
-  frame->height = height;
-  // frame->roi = NULL;
-  // frame->maskROI = NULL; //must be NULL in opencv
-  // frame->imageId = NULL; //must be NULL in opencv
-  // frame->tileInfo = NULL; //must be NULL in opencv
-  frame->imageSize = height * width * 3;
-  frame->widthStep = width * 3;
-  // iplimage->BorderMode; //ignored by opencv
-  // iplimage->BorderConst; //ignored by opencv
-  // if(frame->imageData!=NULL){
-  //  delete frame->imageData;
-  //}
-  // frame->imageData = new char[frame->imageSize];
+  // /// First method, first fill zero and then overwrite
+  // frame = cv::Mat::zeros(height, width, CV_8UC3);
+
+  // int num = width * height;
+  // for (int i = 0; i < num; i++) {
+  //   frame.data[i * 3] = pFrameRGB->data[0][i * 3 + 2];
+  //   frame.data[i * 3 + 1] = pFrameRGB->data[0][i * 3 + 1];
+  //   frame.data[i * 3 + 2] = pFrameRGB->data[0][i * 3];
+  // }
+
+  /// Second method, first fill pFrameRGB->data then swap red and blue
+  frame = cv::Mat(height, width, CV_8UC3, pFrameRGB->data[0]);
+
   int num = width * height;
   for (int i = 0; i < num; i++) {
-    frame->imageData[i * 3] = pFrameRGB->data[0][i * 3 + 2];
-    frame->imageData[i * 3 + 1] = pFrameRGB->data[0][i * 3 + 1];
-    frame->imageData[i * 3 + 2] = pFrameRGB->data[0][i * 3];
+    std::swap(frame.data[i * 3], frame.data[i * 3 + 2]);
   }
 
-  //	frame->imageData = (char*)(frame->imageDataOrigin);
 }
 
 void Video::setWidth(int w) { width = w; }
 
 void Video::setHeight(int h) { height = h; }
 
-CvRect Video::getROI() { return roi; }
+cv::Rect Video::getROI() { return roi; }
 
-void Video::setROI(CvRect &cr) {
+void Video::setROI(cv::Rect &cr) {
   roi = cr;
-  if (frame != NULL) {
-    cvSetImageROI(frame, roi);
+  if (!frame.empty()) {
+    frame = frame(roi);
   }
 }
 
@@ -309,15 +278,8 @@ void Video::setROI(int x, int y, int w, int h) {
   roi.y = y;
   roi.width = w;
   roi.height = h;
-  if (frame != NULL) {
-    cvSetImageROI(frame, roi);
+  if (!frame.empty()) {
+    frame = frame(roi);
   }
 }
 
-void Video::resetROI() {
-  roi.x = -1;
-  roi.y = -1;
-  roi.width = -1;
-  roi.height = -1;
-  cvResetImageROI(frame);
-}

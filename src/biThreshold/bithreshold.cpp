@@ -1,5 +1,8 @@
 #include <set>
 #include <list>
+#include <algorithm>
+#include <vector>
+
 #include "bithreshold.hpp"
 #include "option.hpp"
 
@@ -55,7 +58,7 @@ BiThreshold::BiThreshold(char **argv, int argc)
     op.dump_help();
     return;
   }
-
+  
   videoFilePath = op.get_string("-i");
 
   numGridWidth = op.get_int(KEY_GRID_WIDTH);
@@ -73,22 +76,20 @@ BiThreshold::BiThreshold(char **argv, int argc)
   cutBias = op.get_float(KEY_CUT_BIAS);
   margin = op.get_float(KEY_MARGIN);
 
-  video = new Video();
-
-  if (video->open(videoFilePath.c_str()) != true) {
+  if (video.open(videoFilePath.c_str()) != true) {
     LOG_FATAL("can not open the video");
   }
 
-  int w = video->getWidth();
-  int h = video->getHeight();
-  video->setROI(w * widthMarginRate, h * heightMarginRate,
-                w * (1 - 2 * widthMarginRate), h * (1 - 2 * heightMarginRate));
+  int w = video.getWidth();
+  int h = video.getHeight();
+  video.setROI(w * widthMarginRate, h * heightMarginRate,
+	       w * (1 - 2 * widthMarginRate), h * (1 - 2 * heightMarginRate));
+
+  nchannel = 3;
+  
 }
 
 BiThreshold::~BiThreshold() {
-  if (video != NULL) {
-    delete video;
-  }
 }
 
 /**
@@ -99,33 +100,14 @@ BiThreshold::~BiThreshold() {
  *
  * @return
  */
-float BiThreshold::midAverage(float *array, int length) {
-  /**
-   * sort it
-   *
-   */
-  float swp = 0;
-  int i, j;
-  for (i = 0; i < length - 1; i++) {
-    for (j = i + 1; j < length; j++) {
-      if (array[i] > array[j]) {
-        swp = array[i];
-        array[i] = array[j];
-        array[j] = swp;
-      }
-    }
-  }
-  /**
-   * compute the sum of the middle of the array
-   *
-   */
-  int m = gridBegin;
-  float sum = 0.0;
-  while (m < gridEnd) {
-    sum += array[m];
-    m++;
-  }
-  return sum / (gridEnd - gridBegin);
+float BiThreshold::midAverage(std::vector<float>& array) {
+
+  std::sort(array.begin(), array.end());
+
+  // compute the mean of the middle of the array
+  return std::accumulate(array.begin()+gridBegin,
+			 array.begin()+gridEnd,
+			 0.0)  /  (gridEnd - gridBegin);
 }
 
 /**
@@ -133,23 +115,30 @@ float BiThreshold::midAverage(float *array, int length) {
  *
  */
 
-float BiThreshold::compare(Hist *foo, Hist *bar, int mode) {
-
-  Grid grid = foo->getGrid();
-  assert(grid.x == bar->getGrid().x);
-  assert(grid.y == bar->getGrid().y);
+float BiThreshold::compare(Hist& foo,
+			   Hist& bar,
+			   cv::HistCompMethods mode) {
+  
+  Grid grid = foo.getGrid();
+  
   int length = grid.x * grid.y;
-  float *diff = new float[length];
-  for (int i = 0; i < length; i++) {
-    diff[i] = cvCompareHist((*foo)[i], (*bar)[i], mode);
+
+  float result = 0.;
+  for(int ch=0; ch<nchannel; ch++) {
+    vector<float> diff;
+    diff.reserve(foo.getHist()[ch].size());
+    
+    for (int i = 0; i<foo.getHist()[ch].size(); i++)
+      diff.push_back(cv::compareHist(foo.getHist()[ch][i], bar.getHist()[ch][i], mode));
+    
+    result += midAverage(diff);
   }
-  float result = midAverage(diff, length);
-  delete diff;
-  return result;
+  
+  return result/nchannel;
 }
 
 bool BiThreshold::detect() {
-
+  
   shotBoundary.clear(); // clear the former result
 
   float midiff = 0;
@@ -158,25 +147,26 @@ bool BiThreshold::detect() {
   foo.setGrid(numGridWidth, numGridHeight);
   bar.setGrid(numGridWidth, numGridHeight);
   cache.setGrid(numGridWidth, numGridHeight);
-  bar.setImage((*video)[0]);
+  bar.setImageRGB(video[0]);  
   bar.calculate();
+  
   int totalnum = 10000;
   double i = 0, j = 0; /*loop value*/
-  IplImage *pv = NULL;
+  cv::Mat pv;
   int last = 0;
   i = -timeStep;
 
   while (true) {
     i += timeStep;
     foo = bar;
-    pv = (*video)[i];
-    if (pv == NULL) {
+    pv = video[i];
+    if (pv.empty()) {
       last = i;
       break;
     }
-    bar.setImage(pv);
+    bar.setImageRGB(pv);
     bar.calculate();
-    midiff = compare(&foo, &bar);
+    midiff = compare(foo, bar);
     if (midiff < lowThreshold) {
       if (i - begin < minShotLength)
         continue;
@@ -191,14 +181,14 @@ bool BiThreshold::detect() {
       cache = foo;
       for (j = i; j < totalnum; j += timeStep) {
         foo = bar;
-        pv = (*video)[j + timeStep];
-        if (pv == NULL) {
+        pv = video[j + timeStep];
+        if (pv.empty()) {
           last = j;
           break;
         }
-        bar.setImage(pv);
+        bar.setImageRGB(pv);
         bar.calculate();
-        midiff = compare(&cache, &foo);
+        midiff = compare(cache, foo);
         if (midiff < midThreshold) {
           shotBoundary.push_back(
               pair<float, float>(begin + margin, i - margin));
@@ -206,7 +196,7 @@ bool BiThreshold::detect() {
           begin = i;
           break;
         } else {
-          midiff = compare(&foo, &bar);
+          midiff = compare(foo, bar);
           if (midiff > highThreshold) {
             /*false transition, continue to iterate i*/
             i = j;

@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
   ShotDetector sd(argv, argc);
 
   sd.run();
-
+  LOG_MESSAGE("detection done");
   sd.outputKeyFrame();
 
   return 0;
